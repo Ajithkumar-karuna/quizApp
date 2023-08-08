@@ -37,14 +37,11 @@ router.post('/quizanswers', async (req, res) => {
   const { quizId, userId, answers } = req.body;
 
   try {
-    // Create a new QuizAnswer document
     const quizAnswer = new QuizAnswer({
       quizId,
       userId,
       answers,
     });
-
-    // Save the user's quiz answers to the database
     const savedAnswer = await quizAnswer.save();
     res.status(201).json(savedAnswer);
   } catch (err) {
