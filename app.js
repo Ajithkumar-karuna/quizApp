@@ -6,7 +6,7 @@ const app = express();
 
 app.use(bodyParser.json());
 
-mongoose.connect('mongodb+srv://techno:WXh3WegGu08hIyiL@cluster0.id8964e.mongodb.net/', {
+mongoose.connect('mongodb+srv://techno:WXh3WegGu08hIyiL@cluster0.id8964e.mongodb.net/quizApp', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
