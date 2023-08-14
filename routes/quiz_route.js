@@ -34,20 +34,31 @@ router.get('/quizzes/:id', async (req, res) => {
 });
 
 router.post('/quizanswers', async (req, res) => {
-  const { quizId, userId, answers } = req.body;
+  const { userId, answers, page = 1, limit = 10 } = req.body; // Added page and limit parameters
 
   try {
     const quizAnswer = new QuizAnswer({
-      quizId,
       userId,
       answers,
     });
+
     const savedAnswer = await quizAnswer.save();
-    res.status(201).json(savedAnswer);
+
+    // Calculate skip value based on page and limit
+    const skip = (page - 1) * limit;
+
+    // Query database for paginated results
+    const paginatedAnswers = await QuizAnswer.find({ userId }).skip(skip).limit(limit);
+
+    res.status(201).json({
+      savedAnswer,
+      paginatedAnswers,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save quiz answers' });
   }
 });
+
  
 router.get('/quizanswers/:userId', async (req, res) => {
   const userId = req.params.userId;
@@ -62,7 +73,6 @@ router.get('/quizanswers/:userId', async (req, res) => {
 
       return {
         _id: userAnswer._id,
-        quizId: userAnswer.quizId,
         userId: userAnswer.userId,
         totalScore,
         times: userAnswer.times,

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const quizAnswer = new mongoose.Schema({
-  quizId: { type: mongoose.Schema.Types.ObjectId, required: true }, 
   userId: { type: mongoose.Schema.Types.ObjectId, required: true }, 
   answers: [
     {
