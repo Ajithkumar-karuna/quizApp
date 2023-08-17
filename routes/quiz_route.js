@@ -4,18 +4,15 @@ const Quiz = require('../models/quiz');
 const QuizAnswer = require('../models/userResponse');
 
 
-router.post('/quizzes', async (req, res) => {
-  try {
-    const quiz = await Quiz.create(req.body);
-    res.status(201).json(quiz);
-  } catch (err) {
-    res.status(400).json({ error: 'Failed to create quiz' });
-  }
-});
 router.get('/quizzes', async (req, res) => {
   try {
     const quizzes = await Quiz.find();
-    res.status(200).json(quizzes);
+    const totalQuizzes = quizzes.length;
+
+    res.status(200).json({
+      quizzes,
+      totalQuizzes,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch quizzes' });
   }
@@ -34,8 +31,7 @@ router.get('/quizzes/:id', async (req, res) => {
 });
 
 router.post('/quizanswers', async (req, res) => {
-  const { userId, answers, page = 1, limit = 10 } = req.body; // Added page and limit parameters
-
+  const { userId, answers } = req.body; 
   try {
     const quizAnswer = new QuizAnswer({
       userId,
@@ -44,27 +40,28 @@ router.post('/quizanswers', async (req, res) => {
 
     const savedAnswer = await quizAnswer.save();
 
-    // Calculate skip value based on page and limit
-    const skip = (page - 1) * limit;
-
-    // Query database for paginated results
-    const paginatedAnswers = await QuizAnswer.find({ userId }).skip(skip).limit(limit);
-
     res.status(201).json({
       savedAnswer,
-      paginatedAnswers,
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save quiz answers' });
   }
 });
 
- 
+
 router.get('/quizanswers/:userId', async (req, res) => {
   const userId = req.params.userId;
 
   try {
-    const userAnswers = await QuizAnswer.find({ userId });
+    const page = parseInt(req.query.page) || 1; 
+    const pageSize = parseInt(req.query.pageSize) || 10; 
+    const totalAnswers = await QuizAnswer.countDocuments({ userId });
+    const totalPages = Math.ceil(totalAnswers / pageSize);
+
+    const userAnswers = await QuizAnswer.find({ userId })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+
     const answersWithTotals = userAnswers.map(userAnswer => {
       const totalScore = userAnswer.answers.reduce((total, answer) => {
         const questionScore = answer.selectedOption; 
@@ -79,10 +76,16 @@ router.get('/quizanswers/:userId', async (req, res) => {
       };
     });
 
-    res.status(200).json(answersWithTotals);
+    res.status(200).json({
+      answersWithTotals,
+      currentPage: page,
+      totalPages,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve quiz answers' });
   }
 });
 
+
+ 
 module.exports = router;
